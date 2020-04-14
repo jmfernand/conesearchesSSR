@@ -1,0 +1,2 @@
+source /users/ahirota/setupEnvC7.sh
+source /users/ahirota/setupEnvC7_sccb1040.sh

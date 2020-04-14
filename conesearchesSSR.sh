@@ -476,6 +476,8 @@ do
 		    
 		    tint=54
 		    
+		    radius=7
+
 		fi
 		
 	    elif [ "$config" == "C43-8" -o "$config" == "C43-9" -o "$config" == "C43-10" ] ; then
@@ -486,8 +488,15 @@ do
 		
 		if [ "$Band" == "ALMA_RB_07" -o "$Band" == "ALMA_RB_08" -o "$Band" == "ALMA_RB_09" -o "$Band" == "ALMA_RB_10" ] ; then
 		    
-                    tint=54
+		    # Band to Band option for longest baselines and higher frequencies 
+
+                    tint=18
+
+		    radius=5.75
 		    
+		    
+		    
+
 		fi
 		
 	    fi
