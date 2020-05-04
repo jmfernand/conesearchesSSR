@@ -6,7 +6,7 @@ if [[ $# -eq 0 ]] ; then
     echo 'run: sh conesearchesSSR.sh input_file.csv config mode'
     echo 'input_file format: CODE|SB_name|Band|Config|[Epoch]'
     echo 'modes:'
-    echo '1 : SSR for all SBs, and HardCode for SBs with no SSR results'
+    echo '1 : SSR for all compatible SBs, and HardCode for SBs with no SSR results'
     echo '2 : SSR and HardCode for all SBs'
     echo '3 : SSR only'
     
@@ -45,6 +45,11 @@ mkdir conesearch_${config}_${YMD}_mode_${mode}
 source /users/ahirota/setupEnvC7.sh
 source /users/ahirota/setupEnvC7_sccb1040.sh
 
+# set catalog
+
+# export SOURCECAT_URL=sourcecat.osf.alma.cl
+# export SOURCECAT_URL=asa.alma.cl
+export SOURCECAT_URL=2020apr.asa-test.alma.cl
 
 
 # name for file with list of SBs that match the requested configuration 
