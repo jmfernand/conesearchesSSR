@@ -48,8 +48,8 @@ source /users/ahirota/setupEnvC7_sccb1040.sh
 # set catalog
 
 # export SOURCECAT_URL=sourcecat.osf.alma.cl
-# export SOURCECAT_URL=asa.alma.cl
-export SOURCECAT_URL=2020apr.asa-test.alma.cl
+export SOURCECAT_URL=asa.alma.cl
+#export SOURCECAT_URL=2020apr.asa-test.alma.cl
 
 
 # name for file with list of SBs that match the requested configuration 
@@ -105,9 +105,9 @@ touch $CS_sourcelist_file
 
 # header of files with results
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|Run_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params"  > $CS_calibs_file
+echo "ProjectCode|SB_name|Band|Nom_Conf|Run_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|script_run_date"  > $CS_calibs_file
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|Run_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params"  > $CS_calibs_HC_file
+echo "ProjectCode|SB_name|Band|Nom_Conf|Run_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|script_run_date"  > $CS_calibs_HC_file
 
 
 
@@ -309,7 +309,7 @@ do
 			
 			if   ! echo $score | grep -q "-"    ; then
 			    
-			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR"  >> $CS_calibs_file
+			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
 			    
                         fi
 			
@@ -373,7 +373,7 @@ do
 			
                         if   ! echo $score | grep -q "-"    ; then
 			    
-			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR"  >> $CS_calibs_file
+			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
 			    
                         fi
 			
@@ -638,7 +638,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			
 			if   ! echo $score | grep -q "-"    ; then
 			    
-			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params"  >> $CS_calibs_HC_file
+			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
 			    
 			    
                         # save best calibrators in quick sourcelist file                                                                                                                                                                                                                                                                                                                                                                                                                            
@@ -738,7 +738,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			    
 			    if   ! echo $score | grep -q "-"    ; then
 				
-				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params"  >> $CS_calibs_HC_file
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
 				
 				
                             # save best calibrators in quick sourcelist file
@@ -773,17 +773,13 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 		
 		if [ "$best_phase_calib" == "" ] ; then
 		    
-		    echo "$col1|$col2|$col3|$col4|$col5|no_phase|SPWAVG_t${tint}_r${radius}" >> $no_calibs_HC_file 
+		    echo "$col1|$col2|$col3|$col4|$col5|no_phase|SPWAVG_t${tint}_r${radius}|$YMD" >> $no_calibs_HC_file 
 		    
+		elif [ "$best_check_calib" == "" ] ; then
+
+		    echo "$col1|$col2|$col3|$col4|$col5|no_check|SPWAVG_t30_r${radius}|$YMD" >> $no_calibs_HC_file
+
 		fi
-		
-		
-		if [ "$best_check_calib" == "" ] ; then
-		    
-		    echo "$col1|$col2|$col3|$col4|$col5|no_check|SPWAVG_t30_r${radius}" >> $no_calibs_HC_file
-		    
-		fi
-		
 		
 	    fi
 	    
@@ -791,7 +787,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 	    
 	# save SBs without xml file in No_HC calibs file
 	    
-	    echo "$col1|$col2|$col3|$col4|$col5|no_xml|" >> $no_calibs_HC_file
+	    echo "$col1|$col2|$col3|$col4|$col5|no_xml||$YMD" >> $no_calibs_HC_file
 	    
 	fi
 	

@@ -1,7 +1,10 @@
+
 [ArrayOSS/SourceCatalogRetriever] LOCATION='APE1' => server='sourcecat.osf.alma.cl'
+
 [ArrayOSS/SourceCatalogRetriever] LOCATION='OSS-SCO' => server='asa.alma.cl'
+
 [ArrayOSS/SourceCatalogRetriever] LOCATION='OSS-SCO' => server='2020apr.asa-test.alma.cl'
 
-exmaple to load catalog before running search:
+Example to load catalog before running search:
 
 $ export SOURCECAT_URL=2020apr.asa-test.alma.cl
