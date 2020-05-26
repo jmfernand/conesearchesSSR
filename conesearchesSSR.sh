@@ -14,7 +14,7 @@ if [[ $# -eq 0 ]] ; then
 fi
 
 
-this_file='/users/jfernand/cone_searches/scripts/jmf_scripts_2020/conesearchesSSR/conesearchesSSR.sh'
+this_file=$0
 
 YMD=$(date +%FT%H%M%S)
 
@@ -27,7 +27,7 @@ config=$2
 
 mode=$3
 
-echo "$SB list file = SB_list_file"
+echo "SB list file = $SB_list_file"
 
 echo "config = $config"
 
@@ -45,11 +45,23 @@ mkdir conesearch_${config}_${YMD}_mode_${mode}
 source /users/ahirota/setupEnvC7.sh
 source /users/ahirota/setupEnvC7_sccb1040.sh
 
+
 # set catalog
 
 # export SOURCECAT_URL=sourcecat.osf.alma.cl
 export SOURCECAT_URL=asa.alma.cl
 #export SOURCECAT_URL=2020apr.asa-test.alma.cl
+
+
+# name of file with input parameters
+
+input_params=input_params_${YMD}.txt
+
+touch $input_params
+
+# save script full name and input params
+
+echo $0 $@ > $input_params
 
 
 # name for file with list of SBs that match the requested configuration 
@@ -856,6 +868,8 @@ mv *.xml xml_files/.
 
 
 cp $this_file $SB_list_file  scripts/.
+
+mv $input_params scripts/.
 
 mv  OSS_files  summary_files  scan_list_files  gCC_files results  xml_files  scripts conesearch_${config}_${YMD}_mode_${mode}/.
 
