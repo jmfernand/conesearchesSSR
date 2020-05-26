@@ -1,9 +1,9 @@
-# !/bin/bash
+#!/bin/bash
 
 
 if [[ $# -eq 0 ]] ; then
     echo 'input file missing'
-    echo 'run: sh conesearchesSSR.sh input_file.csv config mode'
+    echo 'run: ./conesearchesSSR.sh input_file.csv config mode'
     echo 'input_file format: CODE|SB_name|Band|Config|[Epoch]'
     echo 'modes:'
     echo '1 : SSR for all compatible SBs, and HardCode for SBs with no SSR results'
