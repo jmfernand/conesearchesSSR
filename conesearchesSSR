@@ -45,6 +45,12 @@ mkdir conesearch_${config}_${YMD}_mode_${mode}
 source /users/ahirota/setupEnvC7.sh
 source /users/ahirota/setupEnvC7_sccb1040.sh
 
+# save copies of current versions of Akihiko's scripts
+
+simulateSB_file=$(type -p simulateSB.py)
+
+getCalibratorCandidates_file=$(type -p getCalibratorCandidates.py)
+
 
 # set catalog
 
@@ -867,9 +873,13 @@ mv $CS_sourcelist_file uniq_${CS_sourcelist_file} results/.
 mv *.xml xml_files/.
 
 
-cp $this_file $SB_list_file  scripts/.
+# save scripts and input files used
+
+cp $this_file $SB_list_file  $simulateSB_file $getCalibratorCandidates_file scripts/.
 
 mv $input_params scripts/.
 
 mv  OSS_files  summary_files  scan_list_files  gCC_files results  xml_files  scripts conesearch_${config}_${YMD}_mode_${mode}/.
+
+
 
