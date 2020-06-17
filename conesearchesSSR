@@ -167,264 +167,273 @@ do
     
     if [[ $conf == *$config* ]]; then
 	
+	# deal with ambiguity between conf-1 and conf-10
+
+	if [[ $config == "C43-1" && $conf == *"C43-10"* ]];then
+
+	    echo " skip SB to deal with ambiguity between conf-1 and conf-10"
 	
-        # save SB info in file with list of SBs that match the requested configuration 
-	    
-	echo ""
-	
-	echo "$col1|$col2|$col3|$col4|$col5"
-	
-	echo "$col1|$col2|$col3|$col4|$col5" >> $SBs_config_file
-	
-	
-        # run calibrator search for SB
-	
-        # define special mixed ACA configurations
- 	
-	if [ $config == "7M1PM" ] ; then
-	    
-	    conf_run="/users/ahirota/etc/aca.cm10.pm1.cfg"
-	    
-	elif [ $config == "7M2PM" ] ; then
-	    
-	    conf_run="/users/ahirota/etc/aca.cm10.pm2.cfg"
-	    
-	elif [ $config == "7M3PM" ] ; then
-	    
-	    conf_run="/users/ahirota/etc/aca.cm10.pm3.cfg"
-	    
-	elif [ $config == "7M4PM" ] ; then
-	    
-	    conf_run="/users/ahirota/etc/aca.cm10.pm4.cfg"
-	    
 	else
 	    
-	    conf_run=$config
+        # save SB info in file with list of SBs that match the requested configuration 
 	    
-	fi
-	
-	
-	command="simulateSB.py $CODE $SB_name $Epoch -C $conf_run"
-	
-	echo "$command"
-	
-	$command
-	
-	
-        # file name for summary results:
-	
-	summary_file=log_${CODE}_${SB_name}.xml_OSS_summary.txt
-	
-        # file name for  detailed results:
-	
-	OSS_file=log_${CODE}_${SB_name}.xml_OSS.txt
-	
-        # check if calibrator search was succesful
-	
-	if test -f "$summary_file"; then
+	    echo ""
+	    
+	    echo "$col1|$col2|$col3|$col4|$col5"
+	    
+	    echo "$col1|$col2|$col3|$col4|$col5" >> $SBs_config_file
 	    
 	    
-           # check if SB already has hardcoded calibrators
+        # run calibrator search for SB
 	    
-	    grep "revertHardcodedSources" $OSS_file > hardcod_${OSS_file}
-	    
-	    
-            # if hardcod file is not empty, save hardcoded calibs in quick-ourcelist and put SB in No-Calibs list
-	    
-	    if [[ -s hardcod_${OSS_file} ]] ; then
+        # define special mixed ACA configurations
+ 	    
+	    if [ $config == "7M1PM" ] ; then
 		
+		conf_run="/users/ahirota/etc/aca.cm10.pm1.cfg"
 		
-                # parse hardcoded cal file and save calibrators in sourcelist file
+	    elif [ $config == "7M2PM" ] ; then
 		
+		conf_run="/users/ahirota/etc/aca.cm10.pm2.cfg"
 		
-		while read line;
-                do
-		    
-                    # extract hardcoded calibrator name
-		    
-		    
-		    OIFS=$IFS
-		    
-		    IFS='=' read -r -a array <<< $line
-		    
-		    calib=${array[1]:0:10}
-		    
-		    IFS=$OIFS
-		    
-		    
-		    # write fardcoded calib in sourcelist file
-		    
-		    echo "$calib 1 1" >> $CS_sourcelist_file
-		    
-                done < hardcod_${OSS_file}
+	    elif [ $config == "7M3PM" ] ; then
 		
+		conf_run="/users/ahirota/etc/aca.cm10.pm3.cfg"
 		
-	        # put SB in No-Calibs list
+	    elif [ $config == "7M4PM" ] ; then
 		
-		echo "$col1|$col2|$col3|$col4|$col5" >> $no_calibs_file
+		conf_run="/users/ahirota/etc/aca.cm10.pm4.cfg"
 		
 	    else
 		
+		conf_run=$config
 		
-	        # SEARCH FOR CALIBRATORS FROM simulateSB OUTPUT
+	    fi
+	    
+	    
+	    command="simulateSB.py $CODE $SB_name $Epoch -C $conf_run"
+	    
+	    echo "$command"
+	    
+	    $command
+	    
+	    
+        # file name for summary results:
+	    
+	    summary_file=log_${CODE}_${SB_name}.xml_OSS_summary.txt
+	    
+        # file name for  detailed results:
+	    
+	    OSS_file=log_${CODE}_${SB_name}.xml_OSS.txt
+	    
+        # check if calibrator search was succesful
+	    
+	    if test -f "$summary_file"; then
 		
-                # extract phase cal info from OSS file
 		
-	        # get the first three calibrator candidates
+           # check if SB already has hardcoded calibrators
 		
-		grep -A 6 "Listing ranked candidate list... \[phase" $OSS_file > phase_${OSS_file}
-		
-		
-                # extract check source info from OSS file
-		
-	        # get the first three calibrator candidates
-		
-		grep -A 6 "Listing ranked candidate list... \[check" $OSS_file > check_${OSS_file}
-		
-	    	
-                # parse and save results from phase cal file
-		
-	        # calib candidate line counter
+		grep "revertHardcodedSources" $OSS_file > hardcod_${OSS_file}
 		
 		
-		i=0
+            # if hardcod file is not empty, save hardcoded calibs in quick-sourcelist and put SB in No-Calibs list
 		
-		calib_type='phase'
-		
-		while read line;
-		do
-		    if echo $line | grep -q "\[J" ; then
+		if [[ -s hardcod_${OSS_file} ]] ; then
+		    
+		    
+                # parse hardcoded cal file and save calibrators in sourcelist file
+		    
+		    
+		    while read line;
+                    do
 			
-		       	
+                    # extract hardcoded calibrator name
+			
+			
 			OIFS=$IFS
 			
-			IFS='|' read -r -a array <<< $line
+			IFS='=' read -r -a array <<< $line
 			
-			calib=${array[1]:1:10}
-			
-			flux=${array[10]}
-			
-			SNR=${array[11]}
-			
-			sep=${array[12]}
-			
-			date=${array[9]}
-			
-			days=${array[16]}
-			
-			UVmax=${array[17]}
-			
-			UVmin=${array[18]}
-			
-			dRA=${array[4]}
-			
-			dDEC=${array[5]}
-			
-			score=${array[19]}
-			
-			
-			# save valid results
-			
-			if   ! echo $score | grep -q "-"    ; then
-			    
-			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
-			    
-                        fi
-			
-			
-			# save best calibrators in quick sourcelist file
-			
-			if [ $i -eq 0 ] ; then
-			    
-			    echo "$calib 1 1" >> $CS_sourcelist_file
-			    
-			fi
+			calib=${array[1]:0:10}
 			
 			IFS=$OIFS
 			
-			i=$(( $i + 1 ))
 			
-		    fi
-		done < phase_${OSS_file}
-		
-		
+		    # write hardcoded calib in sourcelist file
+			
+			echo "$calib 1 1" >> $CS_sourcelist_file
+			
+                    done < hardcod_${OSS_file}
+		    
+		    
+	        # put SB in No-Calibs list
+		    
+		    echo "$col1|$col2|$col3|$col4|$col5" >> $no_calibs_file
+		    
+		else
+		    
+		    
+	        # SEARCH FOR CALIBRATORS FROM simulateSB OUTPUT
+		    
+                # extract phase cal info from OSS file
+		    
+	        # get the first three calibrator candidates
+		    
+		    grep -A 6 "Listing ranked candidate list... \[phase" $OSS_file > phase_${OSS_file}
+		    
+		    
+                # extract check source info from OSS file
+		    
+	        # get the first three calibrator candidates
+		    
+		    grep -A 6 "Listing ranked candidate list... \[check" $OSS_file > check_${OSS_file}
+		    
+	    	    
+                # parse and save results from phase cal file
+		    
+	        # calib candidate line counter
+		    
+		    
+		    i=0
+		    
+		    calib_type='phase'
+		    
+		    while read line;
+		    do
+			if echo $line | grep -q "\[J" ; then
+			    
+		       	    
+			    OIFS=$IFS
+			    
+			    IFS='|' read -r -a array <<< $line
+			    
+			    calib=${array[1]:1:10}
+			    
+			    flux=${array[10]}
+			    
+			    SNR=${array[11]}
+			    
+			    sep=${array[12]}
+			    
+			    date=${array[9]}
+			    
+			    days=${array[16]}
+			    
+			    UVmax=${array[17]}
+			    
+			    UVmin=${array[18]}
+			    
+			    dRA=${array[4]}
+			    
+			    dDEC=${array[5]}
+			    
+			    score=${array[19]}
+			    
+			    
+			# save valid results
+			    
+			    if   ! echo $score | grep -q "-"    ; then
+				
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
+				
+                            fi
+			    
+			    
+			# save best calibrators in quick sourcelist file
+			    
+			    if [ $i -eq 0 ] ; then
+				
+				echo "$calib 1 1" >> $CS_sourcelist_file
+				
+			    fi
+			    
+			    IFS=$OIFS
+			    
+			    i=$(( $i + 1 ))
+			    
+			fi
+		    done < phase_${OSS_file}
+		    
+		    
                 # parse and save results from check source file
-		
+		    
                 # calib candidate line counter
-		
-                i=0
-		
-		calib_type='check'
-		
-                while read line;
-                do
-		    if echo $line | grep -q "\[J" ; then
-			
-                        OIFS=$IFS
-			
-                        IFS='|' read -r -a array <<< $line
-			
-                        calib=${array[1]:1:10}
-			
-                        flux=${array[10]}
-			
-                        SNR=${array[11]}
-			
-                        sep=${array[12]}
-			
-                        date=${array[9]}
-			
-                        days=${array[16]}
-			
-                        UVmax=${array[17]}
-			
-                        UVmin=${array[18]}
-			
-                        dRA=${array[4]}
-			
-                        dDEC=${array[5]}
-			
-			score=${array[19]}
-			
-			
+		    
+                    i=0
+		    
+		    calib_type='check'
+		    
+                    while read line;
+                    do
+			if echo $line | grep -q "\[J" ; then
+			    
+                            OIFS=$IFS
+			    
+                            IFS='|' read -r -a array <<< $line
+			    
+                            calib=${array[1]:1:10}
+			    
+                            flux=${array[10]}
+			    
+                            SNR=${array[11]}
+			    
+                            sep=${array[12]}
+			    
+                            date=${array[9]}
+			    
+                            days=${array[16]}
+			    
+                            UVmax=${array[17]}
+			    
+                            UVmin=${array[18]}
+			    
+                            dRA=${array[4]}
+			    
+                            dDEC=${array[5]}
+			    
+			    score=${array[19]}
+			    
+			    
                         # save valid results                                                                                                                                                                                                                                    
-			
-                        if   ! echo $score | grep -q "-"    ; then
 			    
-			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
+                            if   ! echo $score | grep -q "-"    ; then
+				
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
+				
+                            fi
 			    
-                        fi
-			
-			
+			    
                         # save best calibrators in quick sourcelist file                                                                                                                                                                                                        
-			
-                        if [ $i -eq 0 ] ; then
 			    
-			    echo "$calib 1 1" >> $CS_sourcelist_file
+                            if [ $i -eq 0 ] ; then
+				
+				echo "$calib 1 1" >> $CS_sourcelist_file
+				
+                            fi
 			    
-                        fi
-			
-                        IFS=$OIFS
-			
-			
-                        i=$(( $i + 1 ))
-			
-		    fi
-                done < check_${OSS_file}
+                            IFS=$OIFS
+			    
+			    
+                            i=$(( $i + 1 ))
+			    
+			fi
+                    done < check_${OSS_file}
+		    
+		    
+		fi
 		
-
+        # add SB in no-calibs-file  if no results found
+		
+	    else
+		
+		echo "$col1|$col2|$col3|$col4|$col5" >> $no_calibs_file
+		
 	    fi
 	    
-        # add SB in no-calibs-file  if no results found
-	    
-	else
-	    
-	    echo "$col1|$col2|$col3|$col4|$col5" >> $no_calibs_file
-	    
 	fi
-	
+
     fi
-    
+	
 done < $SB_list_file
 
 
@@ -435,8 +444,6 @@ sed -r -i 's/\s+//g'  $CS_calibs_file
 
 
 # clean up                                                                                                                                                                                                         
-
-
 
 mv *OSS.txt OSS_files/.
 
@@ -504,220 +511,128 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 	    
 	    if [[ $conf == *$config* ]]; then
 		
-		
-		
-		echo ""
-		
-		echo "$col1|$col2|$col3|$col4|$col5"
-	    
-		
-                # run calibrator search for SB                                                                                                                                                                                                                                                                                                                                                       
-		extra_params=""
-	    
-  	    # select hardcod search-parameters based on band and configurations
-		
-		
-		if [ "$config" == "7M"  -o "$config" == "7M1PM"  -o "$config" == "7M2PM"  -o "$config" == "7M3PM"  -o "$config" == "7M4PM" ] ; then
+
+                # deal with ambiguity between conf-1 and conf-10
+
+		if [[ $config == "C43-1" && $conf == *"C43-10"* ]];then
 		    
-		    tint=60
-		    
-		    radius=20
-	    	    
-		elif [ "$config" == "C43-1" -o "$config" == "C43-2" -o "$config" == "C43-3" -o "$config" == "C43-4" -o "$config" == "C43-5" -o "$config" == "C43-6" ] ; then
-		    
-		    
-		    tint=60
-		    
-		    radius=15
-		    
-		    
-		elif [ "$config" == "C43-7" ] ; then
-		    
-		    tint=18
-		    
-		    radius=12
-		    
-		    
-		    if [ "$Band" == "ALMA_RB_08" -o "$Band" == "ALMA_RB_09" -o "$Band" == "ALMA_RB_10" ] ; then
-			
-			tint=54
-			
-			radius=7
-			
-		    fi
-		    
-		elif [ "$config" == "C43-8" -o "$config" == "C43-9" -o "$config" == "C43-10" ] ; then
-		    
-		    tint=18
-		    
-		    radius=12
-		    
-		    if [ "$Band" == "ALMA_RB_07" -o "$Band" == "ALMA_RB_08" -o "$Band" == "ALMA_RB_09" -o "$Band" == "ALMA_RB_10" ] ; then
-			
-		    # Band to Band option for longest baselines and higher frequencies 
-			
-			tint=18
-			
-			radius=5.75
-			
-			extra_params=" --spectralSpec=calsurvey,3 "
-			
-			
-		    fi
-		    
-		fi
-		
-		
-	    # reset best HC phase calib
-		
-		best_phase_calib=''
-		
-	    # run getCalibratorCandidates.py script to get phase calibrator
-		
-            # define special mixed ACA configurations                                                                                                                                                                  
-		
-		if [ $config == "7M1PM" ] ; then
-		    
-		    conf_run="/users/ahirota/etc/aca.cm10.pm1.cfg"
-		    
-		elif [ $config == "7M2PM" ] ; then
-		    
-		    conf_run="/users/ahirota/etc/aca.cm10.pm2.cfg"
-		    
-		elif [ $config == "7M3PM" ] ; then
-		    
-		    conf_run="/users/ahirota/etc/aca.cm10.pm3.cfg"
-		    
-		elif [ $config == "7M4PM" ] ; then
-		    
-		    conf_run="/users/ahirota/etc/aca.cm10.pm4.cfg"
+		    echo " skip SB to deal with ambiguity between conf-1 and conf-10"
 		    
 		else
 		    
-		    conf_run=$config
 		    
-		fi
-		
-		echo "getCalibratorCandidates.py $xml_filename  --workaroundForICT10449 -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}.txt"
-		
-		getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}.txt
-		
-		
-	    # extract phase cal info from log_gCC file
-		
-            # get the first three calibrator candidates                                                                                                                                                                                                                                                                                                                                  
-		
-		grep -A 6 "Listing ranked candidate list... \[phase" log_phase_gCC_${CODE}_${SB_name}.txt  > phase_gCC_${CODE}_${SB_name}.txt
-		
-		
-            # parse and save results from phase cal file                                                                                                                                                                                                                                                                                                                                                                                                                                
-		
-            # calib candidate line counter                                                                                                                                                                                                                                                                                                                                                                                                                                              
-		
-		i=0
-		
-		calib_type='phase'
-		
-		
-		while read line;
-		do
-		    if echo $line | grep -q "\[J" ; then
-        		
+		    echo ""
+		    
+		    echo "$col1|$col2|$col3|$col4|$col5"
+		    
+		    
+                # run calibrator search for SB                                                                                                                                                                                                                                                                                                                                                       
+		    extra_params=""
+		    
+  	    # select hardcod search-parameters based on band and configurations
+		    
+		    
+		    if [ "$config" == "7M"  -o "$config" == "7M1PM"  -o "$config" == "7M2PM"  -o "$config" == "7M3PM"  -o "$config" == "7M4PM" ] ; then
 			
-			OIFS=$IFS
+			tint=60
 			
-			IFS='|' read -r -a array <<< $line
+			radius=20
+	    		
+		    elif [ "$config" == "C43-1" -o "$config" == "C43-2" -o "$config" == "C43-3" -o "$config" == "C43-4" -o "$config" == "C43-5" -o "$config" == "C43-6" ] ; then
 			
 			
-			calib=${array[1]:1:10}
+			tint=60
 			
-			flux=${array[10]}
-			
-			SNR=${array[11]}
-			
-			sep=${array[12]}
-			
-			date=${array[9]}
-			
-			days=${array[16]}
-			
-			UVmax=${array[17]}
-			
-			UVmin=${array[18]}
-			
-			dRA=${array[4]}
-			
-			dDEC=${array[5]}
-			
-			score=${array[19]}
+			radius=15
 			
 			
-                    # save valid results                                                                                                                                                                                                                                                                                                                                                                                                                                                
+		    elif [ "$config" == "C43-7" ] ; then
 			
-			if   ! echo $score | grep -q "-"    ; then
+			tint=18
+			
+			radius=12
+			
+			
+			if [ "$Band" == "ALMA_RB_08" -o "$Band" == "ALMA_RB_09" -o "$Band" == "ALMA_RB_10" ] ; then
 			    
-			    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
+			    tint=54
 			    
+			    radius=7
 			    
-                        # save best calibrators in quick sourcelist file                                                                                                                                                                                                                                                                                                                                                                                                                            
+			fi
+			
+		    elif [ "$config" == "C43-8" -o "$config" == "C43-9" -o "$config" == "C43-10" ] ; then
+			
+			tint=18
+			
+			radius=12
+			
+			if [ "$Band" == "ALMA_RB_07" -o "$Band" == "ALMA_RB_08" -o "$Band" == "ALMA_RB_09" -o "$Band" == "ALMA_RB_10" ] ; then
 			    
-			    if [ $i -eq 0 ] ; then
-				
-				echo "$calib 1 1" >> $CS_sourcelist_file
-				
-			    # save best phase calib if valid, to use in check source search
-				
-				best_phase_calib=$calib
-				
-				
-			    fi
+		    # Band to Band option for longest baselines and higher frequencies 
+			    
+			    tint=18
+			    
+			    radius=5.75
+			    
+			    extra_params=" --spectralSpec=calsurvey,3 "
 			    
 			    
 			fi
 			
+		    fi
+		    
+		    
+	    # reset best HC phase calib
+		    
+		    best_phase_calib=''
+		    
+	    # run getCalibratorCandidates.py script to get phase calibrator
+		    
+            # define special mixed ACA configurations                                                                                                                                                                  
+		    
+		    if [ $config == "7M1PM" ] ; then
 			
-			IFS=$OIFS
+			conf_run="/users/ahirota/etc/aca.cm10.pm1.cfg"
 			
-			i=$(( $i + 1 ))
+		    elif [ $config == "7M2PM" ] ; then
+			
+			conf_run="/users/ahirota/etc/aca.cm10.pm2.cfg"
+			
+		    elif [ $config == "7M3PM" ] ; then
+			
+			conf_run="/users/ahirota/etc/aca.cm10.pm3.cfg"
+			
+		    elif [ $config == "7M4PM" ] ; then
+			
+			conf_run="/users/ahirota/etc/aca.cm10.pm4.cfg"
+			
+		    else
+			
+			conf_run=$config
 			
 		    fi
-		done < phase_gCC_${CODE}_${SB_name}.txt	
-		
-		
-		
-	    # If phase calibrator search is succesfull look for check source
-		
-		
-	    # reset best HC check source
-		
-		best_check_calib=''
-		
-		
-		if [ "$best_phase_calib" != "" ] ; then
 		    
-                # run getCalibratorCandidates.py script to get check source
+		    echo "getCalibratorCandidates.py $xml_filename  --workaroundForICT10449 -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}.txt"
+		    
+		    getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}.txt
 		    
 		    
-		    echo "getCalibratorCandidates.py $xml_filename  --workaroundForICT10449 -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}.txt"
+	    # extract phase cal info from log_gCC file
 		    
-		    getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}.txt
+            # get the first three calibrator candidates                                                                                                                                                                                                                                                                                                                                  
 		    
-		    
-		    
-	        # extract check source info from log_gCC file
-		    
-                # get the first three calibrator candidates
-		    
-		    grep -A 6 "Listing ranked candidate list... \[check" log_check_gCC_${CODE}_${SB_name}.txt  > check_gCC_${CODE}_${SB_name}.txt
+		    grep -A 6 "Listing ranked candidate list... \[phase" log_phase_gCC_${CODE}_${SB_name}.txt  > phase_gCC_${CODE}_${SB_name}.txt
 		    
 		    
-                # parse and save results from check src file
+            # parse and save results from phase cal file                                                                                                                                                                                                                                                                                                                                                                                                                                
 		    
-                # calib candidate line counter
+            # calib candidate line counter                                                                                                                                                                                                                                                                                                                                                                                                                                              
 		    
 		    i=0
 		    
-		    calib_type='check'
+		    calib_type='phase'
+		    
 		    
 		    while read line;
 		    do
@@ -752,23 +667,24 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			    score=${array[19]}
 			    
 			    
-                        # save valid results
+                    # save valid results                                                                                                                                                                                                                                                                                                                                                                                                                                                
 			    
 			    if   ! echo $score | grep -q "-"    ; then
 				
-				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
 				
 				
-                            # save best calibrators in quick sourcelist file
+                        # save best calibrators in quick sourcelist file                                                                                                                                                                                                                                                                                                                                                                                                                            
 				
 				if [ $i -eq 0 ] ; then
 				    
 				    echo "$calib 1 1" >> $CS_sourcelist_file
 				    
-                                # save best check calib if valid
+			    # save best phase calib if valid, to use in check source search
 				    
-				    best_check_calib=$calib
-			    	    
+				    best_phase_calib=$calib
+				    
+				    
 				fi
 				
 				
@@ -780,27 +696,129 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			    i=$(( $i + 1 ))
 			    
 			fi
+		    done < phase_gCC_${CODE}_${SB_name}.txt	
+		    
+		    
+		    
+	    # If phase calibrator search is succesfull look for check source
+		    
+		    
+	    # reset best HC check source
+		    
+		    best_check_calib=''
+		    
+		    
+		    if [ "$best_phase_calib" != "" ] ; then
 			
-		    done < check_gCC_${CODE}_${SB_name}.txt
+                # run getCalibratorCandidates.py script to get check source
+			
+			
+			echo "getCalibratorCandidates.py $xml_filename  --workaroundForICT10449 -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}.txt"
+			
+			getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}.txt
+			
+			
+			
+	        # extract check source info from log_gCC file
+			
+                # get the first three calibrator candidates
+			
+			grep -A 6 "Listing ranked candidate list... \[check" log_check_gCC_${CODE}_${SB_name}.txt  > check_gCC_${CODE}_${SB_name}.txt
+			
+			
+                # parse and save results from check src file
+			
+                # calib candidate line counter
+			
+			i=0
+			
+			calib_type='check'
+			
+			while read line;
+			do
+			    if echo $line | grep -q "\[J" ; then
+        			
+				
+				OIFS=$IFS
+				
+				IFS='|' read -r -a array <<< $line
+				
+				
+				calib=${array[1]:1:10}
+				
+				flux=${array[10]}
+				
+				SNR=${array[11]}
+				
+				sep=${array[12]}
+				
+				date=${array[9]}
+				
+				days=${array[16]}
+				
+				UVmax=${array[17]}
+				
+				UVmin=${array[18]}
+				
+				dRA=${array[4]}
+				
+				dDEC=${array[5]}
+				
+				score=${array[19]}
+				
+				
+                        # save valid results
+				
+				if   ! echo $score | grep -q "-"    ; then
+				    
+				    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
+				    
+				    
+                            # save best calibrators in quick sourcelist file
+				    
+				    if [ $i -eq 0 ] ; then
+					
+					echo "$calib 1 1" >> $CS_sourcelist_file
+					
+                                # save best check calib if valid
+					
+					best_check_calib=$calib
+			    		
+				    fi
+				    
+				    
+				fi
+				
+				
+				IFS=$OIFS
+				
+				i=$(( $i + 1 ))
+				
+			    fi
+			    
+			done < check_gCC_${CODE}_${SB_name}.txt
+			
+			
+		    fi
 		    
 		    
-		fi
-		
-		
             # save SBs without hardcoded calibs, noting the missing type of calib and the search params
-		
-		if [ "$best_phase_calib" == "" ] ; then
 		    
-		    echo "$col1|$col2|$col3|$col4|$col5|no_phase|SPWAVG_t${tint}_r${radius}|$YMD" >> $no_calibs_HC_file 
+		    if [ "$best_phase_calib" == "" ] ; then
+			
+			echo "$col1|$col2|$col3|$col4|$col5|no_phase|SPWAVG_t${tint}_r${radius}|$YMD" >> $no_calibs_HC_file 
+			
+		    elif [ "$best_check_calib" == "" ] ; then
+			
+			echo "$col1|$col2|$col3|$col4|$col5|no_check|SPWAVG_t30_r${radius}|$YMD" >> $no_calibs_HC_file
+			
+		    fi
 		    
-		elif [ "$best_check_calib" == "" ] ; then
-
-		    echo "$col1|$col2|$col3|$col4|$col5|no_check|SPWAVG_t30_r${radius}|$YMD" >> $no_calibs_HC_file
-
 		fi
 		
 	    fi
 	    
+
 	else
 	    
 	# save SBs without xml file in No_HC calibs file
@@ -810,10 +828,10 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 	fi
 	
     done < $SB_list_HC_file
-   
- 
+    
+    
     mv *gCC*.txt gCC_files/.
-
+    
 fi
 
 
@@ -870,7 +888,7 @@ touch "uniq_${CS_sourcelist_file}"
 
 mv $CS_sourcelist_file uniq_${CS_sourcelist_file} results/.
 
-mv *.xml xml_files/.
+rm *.xml
 
 
 # save scripts and input files used
