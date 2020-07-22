@@ -4,7 +4,7 @@
 if [[ $# -eq 0 ]] ; then
     echo 'input file missing'
     echo 'run: ./conesearchesSSR.sh input_file.csv config mode'
-    echo 'input_file format: CODE|SB_name|Band|Config|[Epoch]'
+    echo 'input_file format header: CODE|SB_name|Band|Config|[Epoch]|SB_list_date'
     echo 'modes:'
     echo '1 : SSR for all compatible SBs, and HardCode for SBs with no SSR results'
     echo '2 : SSR and HardCode for all SBs'
@@ -123,11 +123,11 @@ touch $CS_sourcelist_file
 
 # header of files with results
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|Run_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|script_run_date"  > $CS_calibs_file
+echo "ProjectCode|SB_name|Band|Nom_Conf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_file
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|Run_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|script_run_date"  > $CS_calibs_HC_file
+echo "ProjectCode|SB_name|Band|Nom_Conf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_HC_file
 
-
+echo "ProjectCode|SB_name|Band|Nom_Conf|CS_Sim_Conf|Epoch|Problem|SPWAVG_t${tint}_r${radius}|SB_List_date|CS_Sim_date" > $no_calibs_HC_file
 
 # directories to save files:
 
@@ -149,14 +149,25 @@ mkdir scripts
 
 # read input list of SBs
 
+# line counter
+
+l=0
+
 while IFS='|' read -r col1 col2 col3 col4 col5 col6
 do 
     
+    # skip firt line with header
+
+    test $l -eq 1 && ((l=l+1)) && continue
+
+    # read SB list info
+
     CODE=$col1
     SB_name=$col2
     Band=$col3
     conf=$col4
     Epoch=$col5
+    sb_list_date=$col6
     
     if [ "$Epoch" == "" ] ; then
 	
@@ -334,7 +345,7 @@ do
 			    
 			    if   ! echo $score | grep -q "-"    ; then
 				
-				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$sb_list_date|$YMD"  >> $CS_calibs_file
 				
                             fi
 			    
@@ -398,7 +409,7 @@ do
 			    
                             if   ! echo $score | grep -q "-"    ; then
 				
-				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$YMD"  >> $CS_calibs_file
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$sb_list_date|$YMD"  >> $CS_calibs_file
 				
                             fi
 			    
@@ -483,15 +494,27 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 
     fi
 
+    
+    # line counter
+
+    l=0
+
     while IFS='|' read -r col1 col2 col3 col4 col5 col6
     do
 	
+	# skip firt line with header                                                                                                                                                                                                                                                
+	test $l -eq 1 && ((l=l+1)) && continue
+
+
+        # read SB list info                                                                                                                                                                                                                                                         
+
 	CODE=$col1
 	SB_name=$col2
 	Band=$col3
 	conf=$col4
 	Epoch=$col5
-	
+	sb_list_date=$col6
+
 	xml_filename=${CODE}_${SB_name}.xml
 	
 
@@ -671,7 +694,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			    
 			    if   ! echo $score | grep -q "-"    ; then
 				
-				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
+				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params|$sb_list_date|$YMD"  >> $CS_calibs_HC_file
 				
 				
                         # save best calibrators in quick sourcelist file                                                                                                                                                                                                                                                                                                                                                                                                                            
@@ -771,7 +794,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 				
 				if   ! echo $score | grep -q "-"    ; then
 				    
-				    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params|$YMD"  >> $CS_calibs_HC_file
+				    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params|$sb_list_date|$YMD"  >> $CS_calibs_HC_file
 				    
 				    
                             # save best calibrators in quick sourcelist file
@@ -806,11 +829,11 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 		    
 		    if [ "$best_phase_calib" == "" ] ; then
 			
-			echo "$col1|$col2|$col3|$col4|$col5|no_phase|SPWAVG_t${tint}_r${radius}|$YMD" >> $no_calibs_HC_file 
+			echo "$col1|$col2|$col3|$col4|$config|$col5|no_phase|SPWAVG_t${tint}_r${radius}|$sb_list_date|$YMD" >> $no_calibs_HC_file 
 			
 		    elif [ "$best_check_calib" == "" ] ; then
 			
-			echo "$col1|$col2|$col3|$col4|$col5|no_check|SPWAVG_t30_r${radius}|$YMD" >> $no_calibs_HC_file
+			echo "$col1|$col2|$col3|$col4|$config|$col5|no_check|SPWAVG_t30_r${radius}|$sb_list_date|$YMD" >> $no_calibs_HC_file
 			
 		    fi
 		    
@@ -823,7 +846,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 	    
 	# save SBs without xml file in No_HC calibs file
 	    
-	    echo "$col1|$col2|$col3|$col4|$col5|no_xml||$YMD" >> $no_calibs_HC_file
+	    echo "$col1|$col2|$col3|$col4|$config|$col5|no_xml||$sb_list_date|$YMD" >> $no_calibs_HC_file
 	    
 	fi
 	
