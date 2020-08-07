@@ -4,7 +4,7 @@
 if [[ $# -eq 0 ]] ; then
     echo 'input file missing'
     echo 'run: ./conesearchesSSR.sh input_file.csv config mode'
-    echo 'input_file format header: CODE|SB_name|Band|Config|[Epoch]|SB_list_date'
+    echo 'input_file format header: CODE|SB_name|Band|Config|[Epoch]|SB_list_date|[SB_STATE]'
     echo 'modes:'
     echo '1 : SSR for all compatible SBs, and HardCode for SBs with no SSR results'
     echo '2 : SSR and HardCode for all SBs'
@@ -16,7 +16,7 @@ fi
 
 this_file=$0
 
-YMD=$(date +%FT%H%M%S)
+YMD=$(date +%y%m%d-%H%M%S)
 
 
 # input list file of SBs
@@ -65,69 +65,76 @@ input_params=input_params_${YMD}.txt
 
 touch $input_params
 
-# save script full name and input params
+# save script full input params and date
 
 echo $0 $@ > $input_params
+echo $YMD >> $input_params
 
 
 # name for file with list of SBs that match the requested configuration 
 
-SBs_config_file=SBs_${config}_${SB_list_file}
+SBs_config_file=SBs_${config}.txt
 
 touch $SBs_config_file
 
 
 # name for file with calibrators and info for SBs:
 
-CS_calibs_file=CS_simulateSB_SSR_${config}_${SB_list_file}.txt
+CS_calibs_file=CS_simulateSB_SSR_${config}.txt
 
 touch $CS_calibs_file
 
 
 # name for file with lists of SBs with no SSR results:
 
-no_calibs_file=No_SSR_calibs_${config}_${SB_list_file}
+no_calibs_file=No_SSR_SBs_${config}.txt
 
 touch $no_calibs_file
 
 
-# name for file with lists of SBs for HC search:
+# name for file with list of SBs for HC search (the list of SBs with no SSR results if mode=1, or the input  SB list if mode=2):
 
-SB_list_HC_file=SBs_forHC_${config}_${SB_list_file}
+SB_list_HC_file=SBs_forHC_${config}.txt
 
 touch $SB_list_HC_file
 
 
 # name for file with hardcoded calibrators and info for SBs:
 
-CS_calibs_HC_file=CS_simulateSB_HC_${config}_${SB_list_file}.txt
+CS_calibs_HC_file=CS_simulateSB_HC_${config}.txt
 
 touch $CS_calibs_HC_file
 
 
-# name for file with lists of SBs with no HC results
+# name for file with list of SBs with no HC results
 
-no_calibs_HC_file=No_HC_calibs_${config}_${SB_list_file}
+no_calibs_HC_file=No_HC_SBs_${config}.txt
 
 touch $no_calibs_HC_file
 
 
-
 # name of file with quick sourcelist
 
-CS_sourcelist_file=CS_sourcelist_${config}_${SB_list_file}.txt 
+CS_sourcelist_file=CS_sourcelist_${config}.txt 
 
 touch $CS_sourcelist_file
 
 
 
-# header of files with results
+# headers of output files
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_file
+echo "CODE|sbName|band|nominalConf|Epoch" > $SBs_config_file
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_HC_file
+echo "CODE|sbName|band|nominalConf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_file
 
-echo "ProjectCode|SB_name|Band|Nom_Conf|CS_Sim_Conf|Epoch|Problem|SPWAVG_t${tint}_r${radius}|SB_List_date|CS_Sim_date" > $no_calibs_HC_file
+echo "CODE|sbName|band|nominalConf|Epoch|SB_List_date" > $no_calibs_file
+
+echo "CODE|sbName|band|nominalConf|Epoch|SB_List_date" > $SB_list_HC_file
+
+echo "CODE|sbName|band|nominalConf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_HC_file
+
+echo "CODE|sbName|band|nominalConf|CS_Sim_Conf|Epoch|Problem|params|SB_List_date|CS_Sim_date" > $no_calibs_HC_file
+
 
 # directories to save files:
 
@@ -153,12 +160,12 @@ mkdir scripts
 
 l=0
 
-while IFS='|' read -r col1 col2 col3 col4 col5 col6
+while IFS='|' read -r col1 col2 col3 col4 col5 col6 col7
 do 
     
     # skip firt line with header
 
-    test $l -eq 1 && ((l=l+1)) && continue
+    test $l -eq 0 && ((l=l+1)) && continue
 
     # read SB list info
 
@@ -168,6 +175,7 @@ do
     conf=$col4
     Epoch=$col5
     sb_list_date=$col6
+    sb_state=$col7
     
     if [ "$Epoch" == "" ] ; then
 	
@@ -279,7 +287,7 @@ do
 		    
 	        # put SB in No-Calibs list
 		    
-		    echo "$col1|$col2|$col3|$col4|$col5" >> $no_calibs_file
+		    echo "$col1|$col2|$col3|$col4|$col5|$col6" >> $no_calibs_file
 		    
 		else
 		    
@@ -437,7 +445,7 @@ do
 		
 	    else
 		
-		echo "$col1|$col2|$col3|$col4|$col5" >> $no_calibs_file
+		echo "$col1|$col2|$col3|$col4|$col5|$col6" >> $no_calibs_file
 		
 	    fi
 	    
@@ -499,11 +507,11 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 
     l=0
 
-    while IFS='|' read -r col1 col2 col3 col4 col5 col6
+    while IFS='|' read -r col1 col2 col3 col4 col5 col6 col7
     do
 	
 	# skip firt line with header                                                                                                                                                                                                                                                
-	test $l -eq 1 && ((l=l+1)) && continue
+	test $l -eq 0 && ((l=l+1)) && continue
 
 
         # read SB list info                                                                                                                                                                                                                                                         
@@ -514,6 +522,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 	conf=$col4
 	Epoch=$col5
 	sb_list_date=$col6
+	sb_state=$col7
 
 	xml_filename=${CODE}_${SB_name}.xml
 	
@@ -552,7 +561,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
                 # run calibrator search for SB                                                                                                                                                                                                                                                                                                                                                       
 		    extra_params=""
 		    
-  	    # select hardcod search-parameters based on band and configurations
+         	    # select hardcod search-parameters based on band and configurations
 		    
 		    
 		    if [ "$config" == "7M"  -o "$config" == "7M1PM"  -o "$config" == "7M2PM"  -o "$config" == "7M3PM"  -o "$config" == "7M4PM" ] ; then
@@ -863,7 +872,41 @@ fi
 sed -r -i 's/\s+//g'  $CS_calibs_HC_file
 
 
+
+# save local copy of results with generic name
+
+# input params
+
+cp $input_params  input_params.txt
+
+# file with list of SBs that match the requested configuration                                                                                                                                                                       
+
+cp $SBs_config_file  SBs_config.txt
+
+# file with calibrators and info for SBs:                                                                                                                                                                                            
+
+cp $CS_calibs_file CS_simulateSB_SSR_config.txt
+
+# file with lists of SBs with no SSR results:                                                                                                                                                                                        
+
+cp $no_calibs_file No_SSR_SBs_config.txt
+
+# file with list of SBs for HC search (the list of SBs with no SSR results if mode=1, or the input  SB list if mode=2):                                                                                                              
+
+cp $SB_list_HC_file SBs_forHC_config.txt
+
+# file with hardcoded calibrators and info for SBs:                                                                                                                                                                                  
+
+cp $CS_calibs_HC_file CS_simulateSB_HC_config.txt
+
+# file with list of SBs with no HC results                                                                                                                                                                                           
+
+cp $no_calibs_HC_file No_HC_SBs_config.txt
+
+ 
+
 # clean up                                                                                                                                                                                                                                   
+
 
 touch $SBs_config_file
 
@@ -906,6 +949,10 @@ touch $CS_sourcelist_file
 touch "uniq_${CS_sourcelist_file}"
 
 
+# save local copy of quick sourcelist file with generic name
+
+cp uniq_${CS_sourcelist_file} CS_sourcelist_config.txt
+
 
 # more cleanup                         
 
@@ -923,4 +970,4 @@ mv $input_params scripts/.
 mv  OSS_files  summary_files  scan_list_files  gCC_files results  xml_files  scripts conesearch_${config}_${YMD}_mode_${mode}/.
 
 
-
+chmod -R u+w conesearch_${config}_${YMD}_mode_${mode}
