@@ -3,7 +3,7 @@
 
 if [[ $# -eq 0 ]] ; then
     echo 'input file missing'
-    echo 'run: conesearchesSSR input_file.csv config mode [|& tee -a output.txt]'
+    echo 'run: ./conesearchesSSR.sh input_file.csv config mode'
     echo 'input_file format header: CODE|SB_name|Band|Config|[Epoch]|SB_list_date|[SB_STATE]'
     echo 'modes:'
     echo '1 : SSR for all compatible SBs, and HardCode for SBs with no SSR results'
@@ -183,13 +183,6 @@ do
 	Epoch="TRANSIT-1h"
     fi
     
-    # Epoch for filename
-
-    Epoch_fn=$Epoch
-
-    Epoch_fn=${Epoch_fn/,/_}
-
-    
     # only select the SBs that match the requested configuration
     
     if [[ $conf == *$config* ]]; then
@@ -202,7 +195,7 @@ do
 	
 	else
 	    
-            # save SB info in file with list of SBs that match the requested configuration 
+        # save SB info in file with list of SBs that match the requested configuration 
 	    
 	    echo ""
 	    
@@ -211,8 +204,9 @@ do
 	    echo "$col1|$col2|$col3|$col4|$col5" >> $SBs_config_file
 	    
 	    
+        # run calibrator search for SB
 	    
-            # define special mixed ACA configurations
+        # define special mixed ACA configurations
  	    
 	    if [ $config == "7M1PM" ] ; then
 		
@@ -236,59 +230,44 @@ do
 		
 	    fi
 	    
-
-            # RUN SSR SIMULATION FOR SB
-
 	    
 	    command="simulateSB.py $CODE $SB_name $Epoch -C $conf_run"
 	    
 	    echo "$command"
 	    
 	    $command
-	
-
 	    
-            # file name for summary results:
+	    
+        # file name for summary results:
 	    
 	    summary_file=log_${CODE}_${SB_name}.xml_OSS_summary.txt
-
-
-            # file name for  detailed results:
+	    
+        # file name for  detailed results:
 	    
 	    OSS_file=log_${CODE}_${SB_name}.xml_OSS.txt
-
-
 	    
-	    # rename results files adding epoch info
-
-
-	    mv $summary_file log_${CODE}_${SB_name}.xml_epoch_${Epoch_fn}_OSS_summary.txt
-
-	    mv $OSS_file log_${CODE}_${SB_name}.xml_epoch_${Epoch_fn}_OSS.txt
-
-
-            # check if calibrator search was succesful
+        # check if calibrator search was succesful
 	    
 	    if test -f "$summary_file"; then
 		
 		
-                # check if SB already has hardcoded calibrators
+           # check if SB already has hardcoded calibrators
 		
 		grep "revertHardcodedSources" $OSS_file > hardcod_${OSS_file}
 		
 		
-                # if hardcod file is not empty, save hardcoded calibs in quick-sourcelist and put SB in No-Calibs list
+            # if hardcod file is not empty, save hardcoded calibs in quick-sourcelist and put SB in No-Calibs list
 		
 		if [[ -s hardcod_${OSS_file} ]] ; then
 		    
 		    
-                    # parse hardcoded cal file and save calibrators in sourcelist file
+                # parse hardcoded cal file and save calibrators in sourcelist file
 		    
 		    
 		    while read line;
                     do
 			
-                        # extract hardcoded calibrator name
+                    # extract hardcoded calibrator name
 			
 			
 			OIFS=$IFS
@@ -300,39 +279,39 @@ do
 			IFS=$OIFS
 			
 			
-		        # write hardcoded calib in sourcelist file
+		    # write hardcoded calib in sourcelist file
 			
 			echo "$calib 1 1" >> $CS_sourcelist_file
 			
                     done < hardcod_${OSS_file}
 		    
 		    
-       	            # put SB in No-Calibs list
+	        # put SB in No-Calibs list
 		    
 		    echo "$col1|$col2|$col3|$col4|$col5|$col6" >> $no_calibs_file
 		    
 		else
 		    
 		    
-   	            # SEARCH FOR CALIBRATORS FROM simulateSB OUTPUT
+	        # SEARCH FOR CALIBRATORS FROM simulateSB OUTPUT
 		    
-                    # extract phase cal info from OSS file
+                # extract phase cal info from OSS file
 		    
-	            # get the first three calibrator candidates
+	        # get the first three calibrator candidates
 		    
 		    grep -A 6 "Listing ranked candidate list... \[phase" $OSS_file > phase_${OSS_file}
 		    
 		    
-                    # extract check source info from OSS file
+                # extract check source info from OSS file
 		    
-	            # get the first three calibrator candidates
+	        # get the first three calibrator candidates
 		    
 		    grep -A 6 "Listing ranked candidate list... \[check" $OSS_file > check_${OSS_file}
 		    
 	    	    
-                    # parse and save results from phase cal file
+                # parse and save results from phase cal file
 		    
-	            # calib candidate line counter
+	        # calib candidate line counter
 		    
 		    
 		    i=0
@@ -371,7 +350,7 @@ do
 			    score=${array[19]}
 			    
 			    
-		            # save valid results
+			# save valid results
 			    
 			    if   ! echo $score | grep -q "-"    ; then
 				
@@ -396,9 +375,9 @@ do
 		    done < phase_${OSS_file}
 		    
 		    
-                   # parse and save results from check source file
+                # parse and save results from check source file
 		    
-                   # calib candidate line counter
+                # calib candidate line counter
 		    
                     i=0
 		    
@@ -561,14 +540,6 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 	    fi
 	
 	    
-	   # Epoch for filename                                                                                                                                                                                                                  
-
-            Epoch_fn=$Epoch
-            
-	    Epoch_fn=${Epoch_fn/,/_}
-
-
-
             # only select the SBs that match the requested configuration                                                                                                                                                                                                                                                                                                                             
 	    
 	    if [[ $conf == *$config* ]]; then
@@ -677,14 +648,14 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 		    
 		    echo "getCalibratorCandidates.py $xml_filename  --workaroundForICT10449 -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}.txt"
 		    
-		    getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt
+		    getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c phase  -t $tint -r $radius  -C $conf_run  -e $Epoch  > log_phase_gCC_${CODE}_${SB_name}.txt
 		    
 		    
 	    # extract phase cal info from log_gCC file
 		    
             # get the first three calibrator candidates                                                                                                                                                                                                                                                                                                                                  
 		    
-		    grep -A 6 "Listing ranked candidate list... \[phase" log_phase_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt  > phase_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt
+		    grep -A 6 "Listing ranked candidate list... \[phase" log_phase_gCC_${CODE}_${SB_name}.txt  > phase_gCC_${CODE}_${SB_name}.txt
 		    
 		    
             # parse and save results from phase cal file                                                                                                                                                                                                                                                                                                                                                                                                                                
@@ -758,7 +729,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			    i=$(( $i + 1 ))
 			    
 			fi
-		    done < phase_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt	
+		    done < phase_gCC_${CODE}_${SB_name}.txt	
 		    
 		    
 		    
@@ -777,7 +748,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			
 			echo "getCalibratorCandidates.py $xml_filename  --workaroundForICT10449 -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}.txt"
 			
-			getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt
+			getCalibratorCandidates.py $xml_filename --workaroundForICT10449  $extra_params -c check  -t 30 -r $radius  -C $conf_run  -e $Epoch --src $best_phase_calib  > log_check_gCC_${CODE}_${SB_name}.txt
 			
 			
 			
@@ -785,7 +756,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 			
                 # get the first three calibrator candidates
 			
-			grep -A 6 "Listing ranked candidate list... \[check" log_check_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt  > check_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt
+			grep -A 6 "Listing ranked candidate list... \[check" log_check_gCC_${CODE}_${SB_name}.txt  > check_gCC_${CODE}_${SB_name}.txt
 			
 			
                 # parse and save results from check src file
@@ -858,7 +829,7 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 				
 			    fi
 			    
-			done < check_gCC_${CODE}_${SB_name}_epoch_${Epoch_fn}.txt
+			done < check_gCC_${CODE}_${SB_name}.txt
 			
 			
 		    fi
@@ -991,18 +962,11 @@ mv $CS_sourcelist_file uniq_${CS_sourcelist_file} results/.
 rm *.xml
 
 
-# save scripts, input files used and full output stream in to scripts folder
+# save scripts and input files used
 
 cp $this_file $SB_list_file  $simulateSB_file $getCalibratorCandidates_file scripts/.
 
 mv $input_params scripts/.
-
-touch output.txt
-cp output.txt scripts/.
-
-
-# save all folders in to unique simulation folder
-
 
 mv  OSS_files  summary_files  scan_list_files  gCC_files results  xml_files  scripts conesearch_${config}_${YMD}_mode_${mode}/.
 
