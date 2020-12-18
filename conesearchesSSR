@@ -264,7 +264,13 @@ do
 
 	    mv $summary_file log_${CODE}_${SB_name}.xml_epoch_${Epoch_fn}_OSS_summary.txt
 
+	    summary_file=log_${CODE}_${SB_name}.xml_epoch_${Epoch_fn}_OSS_summary.txt
+
+
 	    mv $OSS_file log_${CODE}_${SB_name}.xml_epoch_${Epoch_fn}_OSS.txt
+
+	    OSS_file=log_${CODE}_${SB_name}.xml_epoch_${Epoch_fn}_OSS.txt
+	    
 
 
             # check if calibrator search was succesful
@@ -998,7 +1004,7 @@ cp $this_file $SB_list_file  $simulateSB_file $getCalibratorCandidates_file scri
 mv $input_params scripts/.
 
 touch output.txt
-cp output.txt scripts/.
+mv output.txt scripts/.
 
 
 # save all folders in to unique simulation folder
@@ -1008,3 +1014,5 @@ mv  OSS_files  summary_files  scan_list_files  gCC_files results  xml_files  scr
 
 
 chmod -R u+w conesearch_${config}_${YMD}_mode_${mode}
+
+
