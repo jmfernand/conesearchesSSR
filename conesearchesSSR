@@ -114,7 +114,7 @@ no_calibs_HC_file=No_HC_SBs_${config}.txt
 touch $no_calibs_HC_file
 
 
-# name of file with quick sourcelist
+# name of file with quick Flux Check sourcelist
 
 CS_sourcelist_file=CS_sourcelist_${config}.txt 
 
@@ -135,6 +135,8 @@ echo "CODE|sbName|band|nominalConf|Epoch|SB_List_date" > $SB_list_HC_file
 echo "CODE|sbName|band|nominalConf|CS_Sim_Conf|Calib_type|Calib_name|Flux|Separation|SNR|Date|dDays|uvMax|uvMin|dRA|dDEC|rank|Epoch|params|SB_List_date|CS_Sim_date"  > $CS_calibs_HC_file
 
 echo "CODE|sbName|band|nominalConf|CS_Sim_Conf|Epoch|Problem|params|SB_List_date|CS_Sim_date" > $no_calibs_HC_file
+
+echo "# $YMD Flux Check sourcelist for $config from $SB_list_file" > $CS_sourcelist_file
 
 
 # directories to save files:
@@ -164,7 +166,7 @@ l=0
 while IFS='|' read -r col1 col2 col3 col4 col5 col6 col7
 do 
     
-    # skip firt line with header
+    # skip first line with header
 
     test $l -eq 0 && ((l=l+1)) && continue
 
@@ -317,9 +319,15 @@ do
 		    
 		    echo "$col1|$col2|$col3|$col4|$col5|$col6" >> $no_calibs_file
 		    
+	       
 		else
-		    
-		    
+	
+	    
+		    # if hardcod file is empty, delete it
+    
+		    rm hardcod_${OSS_file}
+
+
    	            # SEARCH FOR CALIBRATORS FROM simulateSB OUTPUT
 		    
                     # extract phase cal info from OSS file
@@ -382,23 +390,25 @@ do
 			    if   ! echo $score | grep -q "-"    ; then
 				
 				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$sb_list_date|$YMD"  >> $CS_calibs_file
+
+
+                            # save the best 2 calibrators in quick sourcelist file                                                                                                                                                                
+
+				if [ "$i == 0" -o "$i == 1" ] ; then
+				    
+                                    echo "$calib 1 1" >> $CS_sourcelist_file
+				    
+				fi								
 				
                             fi
 			    
-			    
-			# save best calibrators in quick sourcelist file
-			    
-			    if [ $i -eq 0 ] ; then
-				
-				echo "$calib 1 1" >> $CS_sourcelist_file
-				
-			    fi
 			    
 			    IFS=$OIFS
 			    
 			    i=$(( $i + 1 ))
 			    
 			fi
+
 		    done < phase_${OSS_file}
 		    
 		    
@@ -440,23 +450,24 @@ do
 			    
 			    score=${array[19]}
 			    
-			    
-                        # save valid results                                                                                                                                                                                                                                    
+  			    
+                           # save valid results                                                                                                                                                                                                                                    
 			    
                             if   ! echo $score | grep -q "-"    ; then
 				
 				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SSR|$sb_list_date|$YMD"  >> $CS_calibs_file
 				
-                            fi
+                          			    
 			    
+                                # save best 2 calibrators in quick sourcelist file                                                                                                                                                                                                        
 			    
-                        # save best calibrators in quick sourcelist file                                                                                                                                                                                                        
-			    
-                            if [ $i -eq 0 ] ; then
+				if [ "$i == 0" -o "$i == 1" ] ; then
+				    
+				    echo "$calib 1 1" >> $CS_sourcelist_file
+				    
+				fi
 				
-				echo "$calib 1 1" >> $CS_sourcelist_file
-				
-                            fi
+			    fi
 			    
                             IFS=$OIFS
 			    
@@ -742,13 +753,13 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 				echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t${tint}_r${radius} $extra_params|$sb_list_date|$YMD"  >> $CS_calibs_HC_file
 				
 				
-                        # save best calibrators in quick sourcelist file                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                # save best 2 calibrators in quick sourcelist file                                                                                                                                                                                                                                                                                                                                                                                                                            
 				
-				if [ $i -eq 0 ] ; then
+				if [ "$i == 0" -o "$i == 1" ] ; then
 				    
 				    echo "$calib 1 1" >> $CS_sourcelist_file
 				    
-			    # save best phase calib if valid, to use in check source search
+			        # save best phase calib if valid, to use in check source search
 				    
 				    best_phase_calib=$calib
 				    
@@ -842,13 +853,13 @@ if [ "$mode" == "1" -o "$mode" == "2" ] ; then
 				    echo "$CODE|$SB_name|$Band|$conf|$config|$calib_type|$calib|$flux|$sep|$SNR|$date|$days|$UVmax|$UVmin|$dRA|$dDEC|$i|$Epoch|SPWAVG_t30_r${radius} $extra_params|$sb_list_date|$YMD"  >> $CS_calibs_HC_file
 				    
 				    
-                            # save best calibrators in quick sourcelist file
+                                    # save best 2 calibrators in quick sourcelist file
 				    
-				    if [ $i -eq 0 ] ; then
+				    if [ "$i == 0" -o "$i == 1" ] ; then
 					
 					echo "$calib 1 1" >> $CS_sourcelist_file
 					
-                                # save best check calib if valid
+                                    # save best check calib if valid
 					
 					best_check_calib=$calib
 			    		
